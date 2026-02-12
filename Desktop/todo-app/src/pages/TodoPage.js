@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TodoItem from '../components/TodoItem';
 
 const TodoPage = () => {
-  // Örnek veriler (State)
-  const [todos, setTodos] = useState([
-    { id: 1, text: "React Projesini Bitir", completed: true },
-    { id: 2, text: "GitHub'a Yükle", completed: false },
-    { id: 3, text: "Kahve Molası Ver", completed: false },
-  ]);
+  // 1. LocalStorage'dan verileri çekerek başlat (Buzdolabı Mantığı)
+  const [todos, setTodos] = useState(() => {
+    const saved = localStorage.getItem("todos");
+    return saved ? JSON.parse(saved) : [
+      { id: 1, text: "React Projesini Bitir", completed: true },
+      { id: 2, text: "GitHub'a Yükle", completed: false },
+      { id: 3, text: "Kahve Molası Ver", completed: false },
+    ];
+  });
   const [input, setInput] = useState("");
 
-  // Ekleme Fonksiyonu
+  // 2. Her değişiklikte LocalStorage'a kaydet
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
+
   const addTodo = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -23,16 +30,25 @@ const TodoPage = () => {
     setInput("");
   };
 
-  // Silme Fonksiyonu
   const deleteTodo = (id) => {
     setTodos(todos.filter(todo => todo.id !== id));
   };
 
-  // Güncelleme (Tamamlandı) Fonksiyonu
   const toggleComplete = (id) => {
     setTodos(todos.map(todo => 
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
     ));
+  };
+
+  // 3. GÜNCELLEME (Metin Düzenleme) FONKSİYONU
+  const updateTodo = (id) => {
+    const todoToEdit = todos.find(t => t.id === id);
+    const newText = prompt("Görevi düzenle:", todoToEdit.text);
+    if (newText && newText.trim() !== "") {
+      setTodos(todos.map(todo => 
+        todo.id === id ? { ...todo, text: newText } : todo
+      ));
+    }
   };
 
   return (
@@ -42,7 +58,6 @@ const TodoPage = () => {
           Yapılacaklar Listesi
         </h1>
         
-        {/* Form */}
         <form onSubmit={addTodo} className="flex mb-8 shadow-sm rounded-lg overflow-hidden">
           <input 
             type="text" 
@@ -56,7 +71,6 @@ const TodoPage = () => {
           </button>
         </form>
 
-        {/* Liste */}
         <div className="space-y-1">
             {todos.length > 0 ? (
               todos.map(todo => (
@@ -65,10 +79,11 @@ const TodoPage = () => {
                   todo={todo} 
                   toggleComplete={toggleComplete} 
                   deleteTodo={deleteTodo} 
+                  updateTodo={updateTodo} // Bu yeni prop'u ekledik
                 />
               ))
             ) : (
-              <p className="text-center text-gray-400 mt-6 italic">Listende hiç görev yok. Hadi bir tane ekle!</p>
+              <p className="text-center text-gray-400 mt-6 italic">Listende hiç görev yok!</p>
             )}
         </div>
         
